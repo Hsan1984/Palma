@@ -446,6 +446,14 @@
             transform: translateX(0);
         }
         
+        /* Loading indicator */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: #8b4513;
+        }
+        
         /* Print styles */
         @media print {
             .tabs, .action-section, .tab-btn, .success-message, .container > header {
@@ -652,12 +660,61 @@
         const pdfBtn = document.getElementById('pdf-btn');
         const successMessage = document.getElementById('success-message');
         
+        // LocalStorage key
+        const STORAGE_KEY = 'salon_the_palma_data_v2';
+        
         // Initialize date input with today's date
         dateInput.value = currentDate;
         updateDateDisplay();
         
+        // Load data from localStorage on startup
+        function loadFromStorage() {
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    // Validate the data structure
+                    if (parsedData && typeof parsedData === 'object') {
+                        salesDataByDate = parsedData;
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to load from localStorage:', error);
+                // Initialize with empty data if loading fails
+                salesDataByDate = {};
+            }
+        }
+        
+        // Save data to localStorage
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(salesDataByDate));
+            } catch (error) {
+                console.warn('Failed to save to localStorage:', error);
+                showErrorMessage('Impossible d\'enregistrer les données. Vérifiez l\'espace de stockage.');
+            }
+        }
+        
+        // Show error message
+        function showErrorMessage(message) {
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'success-message';
+            errorMessage.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            document.body.appendChild(errorMessage);
+            
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(errorMessage);
+                }, 300);
+            }, 3000);
+        }
+        
         // Initialize the application
         function init() {
+            loadFromStorage();
             ensureDateDataExists(currentDate);
             renderProducts();
             updateTotals();
@@ -769,6 +826,7 @@
                     salesDataByDate[currentDate][currentSession][productName] = value;
                     renderProducts();
                     updateTotals();
+                    saveToStorage();
                 }
             });
             
@@ -783,6 +841,7 @@
                     salesDataByDate[currentDate][currentSession][productName] = value;
                     renderProducts();
                     updateTotals();
+                    saveToStorage();
                 }
             });
             
@@ -807,7 +866,7 @@
         // Save current data to ensure it's properly recorded
         function saveCurrentData() {
             ensureDateDataExists(currentDate);
-            // Data is already being updated in real-time
+            saveToStorage();
         }
         
         // Show success message
