@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon de Thé "PALMA" - Calcul de Recette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #8b4513;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            font-weight: 300;
+        }
+        
+        .session-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .session-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .session-btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #8b4513;
+            border: 2px solid #e9ecef;
+        }
+        
+        .session-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .session-btn.active {
+            background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+            color: white;
+            border: 2px solid #8b4513;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+        
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #8b4513;
+        }
+        
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #27ae60;
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #8b4513;
+            background: white;
+            color: #8b4513;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quantity-btn:hover {
+            background: #8b4513;
+            color: white;
+        }
+        
+        .quantity-input {
+            width: 60px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            outline: none;
+        }
+        
+        .totals-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .totals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .total-card {
+            background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .total-label {
+            font-size: 1.1rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .total-amount {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .grand-total {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        
+        .product-total {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #8b4513;
+            text-align: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .session-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .session-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Salon de Thé "PALMA"</h1>
+            <p class="subtitle">Calcul de Recette - Matin & Après-Midi</p>
+        </header>
+        
+        <div class="session-selector">
+            <h2>Sélectionner la séance de travail</h2>
+            <div class="session-buttons">
+                <button class="session-btn active" data-session="matin">Matin</button>
+                <button class="session-btn" data-session="apres-midi">Après-Midi</button>
+            </div>
+        </div>
+        
+        <div class="products-grid" id="products-container">
+            <!-- Products will be dynamically inserted here -->
+        </div>
+        
+        <div class="totals-section">
+            <h2>Totaux</h2>
+            <div class="totals-grid">
+                <div class="total-card">
+                    <div class="total-label">Total Matin</div>
+                    <div class="total-amount" id="total-matin">0 DT</div>
+                </div>
+                <div class="total-card">
+                    <div class="total-label">Total Après-Midi</div>
+                    <div class="total-amount" id="total-apres-midi">0 DT</div>
+                </div>
+                <div class="total-card grand-total">
+                    <div class="total-label">Total des Deux Séances</div>
+                    <div class="total-amount" id="total-general">0 DT</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Product data with prices in Tunisian Dinars (DT)
+        const products = [
+            { name: 'Express', price: 1800 },
+            { name: 'Capucin', price: 2000 },
+            { name: 'Direct', price: 2200 },
+            { name: 'Eau 1/2', price: 1000 },
+            { name: 'Eau 1', price: 1500 },
+            { name: 'Goblet', price: 100 },
+            { name: 'Thé', price: 1000 },
+            { name: 'Boisson', price: 2000 }
+        ];
+        
+        // Sales data for both sessions
+        let salesData = {
+            matin: {},
+            'apres-midi': {}
+        };
+        
+        // Initialize sales data
+        products.forEach(product => {
+            salesData.matin[product.name] = 0;
+            salesData['apres-midi'][product.name] = 0;
+        });
+        
+        let currentSession = 'matin';
+        
+        // DOM elements
+        const sessionButtons = document.querySelectorAll('.session-btn');
+        const productsContainer = document.getElementById('products-container');
+        const totalMatinElement = document.getElementById('total-matin');
+        const totalApresMidiElement = document.getElementById('total-apres-midi');
+        const totalGeneralElement = document.getElementById('total-general');
+        
+        // Initialize the application
+        function init() {
+            renderProducts();
+            updateTotals();
+            setupEventListeners();
+        }
+        
+        // Render products grid
+        function renderProducts() {
+            productsContainer.innerHTML = '';
+            
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                
+                const quantity = salesData[currentSession][product.name];
+                const total = quantity * product.price;
+                
+                productCard.innerHTML = `
+                    <div class="product-header">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">${product.price.toLocaleString()} DT</div>
+                    </div>
+                    <div class="quantity-control">
+                        <button class="quantity-btn decrease" data-product="${product.name}">-</button>
+                        <input type="number" class="quantity-input" value="${quantity}" min="0" data-product="${product.name}">
+                        <button class="quantity-btn increase" data-product="${product.name}">+</button>
+                    </div>
+                    <div class="product-total">Total: ${total.toLocaleString()} DT</div>
+                `;
+                
+                productsContainer.appendChild(productCard);
+            });
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Session buttons
+            sessionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    sessionButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentSession = button.dataset.session;
+                    renderProducts();
+                });
+            });
+            
+            // Quantity controls (using event delegation)
+            productsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('decrease') || e.target.classList.contains('increase')) {
+                    const productName = e.target.dataset.product;
+                    const input = document.querySelector(`input[data-product="${productName}"]`);
+                    let value = parseInt(input.value) || 0;
+                    
+                    if (e.target.classList.contains('increase')) {
+                        value++;
+                    } else if (e.target.classList.contains('decrease') && value > 0) {
+                        value--;
+                    }
+                    
+                    input.value = value;
+                    salesData[currentSession][productName] = value;
+                    renderProducts();
+                    updateTotals();
+                }
+            });
+            
+            // Quantity input changes
+            productsContainer.addEventListener('input', (e) => {
+                if (e.target.classList.contains('quantity-input')) {
+                    const productName = e.target.dataset.product;
+                    let value = parseInt(e.target.value) || 0;
+                    
+                    if (value < 0) value = 0;
+                    e.target.value = value;
+                    salesData[currentSession][productName] = value;
+                    renderProducts();
+                    updateTotals();
+                }
+            });
+        }
+        
+        // Update totals display
+        function updateTotals() {
+            let totalMatin = 0;
+            let totalApresMidi = 0;
+            
+            products.forEach(product => {
+                totalMatin += salesData.matin[product.name] * product.price;
+                totalApresMidi += salesData['apres-midi'][product.name] * product.price;
+            });
+            
+            const totalGeneral = totalMatin + totalApresMidi;
+            
+            totalMatinElement.textContent = totalMatin.toLocaleString() + ' DT';
+            totalApresMidiElement.textContent = totalApresMidi.toLocaleString() + ' DT';
+            totalGeneralElement.textContent = totalGeneral.toLocaleString() + ' DT';
+        }
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
