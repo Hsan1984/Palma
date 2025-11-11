@@ -115,6 +115,17 @@
             font-weight: 600;
         }
         
+        .storage-status {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #27ae60;
+            font-weight: 500;
+        }
+        
+        .storage-error {
+            color: #e74c3c;
+        }
+        
         .session-selector {
             background: white;
             border-radius: 15px;
@@ -315,6 +326,11 @@
             box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
         }
         
+        .backup-btn {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.3);
+        }
+        
         .action-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.4);
@@ -454,9 +470,56 @@
             color: #8b4513;
         }
         
+        /* Backup/Restore section */
+        .backup-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            margin: 20px 0;
+        }
+        
+        .backup-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .backup-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-top: 10px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
         /* Print styles */
         @media print {
-            .tabs, .action-section, .tab-btn, .success-message, .container > header {
+            .tabs, .action-section, .tab-btn, .success-message, .container > header, .backup-section {
                 display: none !important;
             }
             
@@ -527,6 +590,15 @@
                 max-width: 300px;
             }
             
+            .backup-controls {
+                flex-direction: column;
+            }
+            
+            .file-label {
+                width: 100%;
+                text-align: center;
+            }
+            
             h1 {
                 font-size: 2rem;
             }
@@ -563,6 +635,7 @@
         <div class="tabs">
             <button class="tab-btn active" data-tab="calculator">Calculatrice</button>
             <button class="tab-btn" data-tab="history">Historique</button>
+            <button class="tab-btn" data-tab="backup">Sauvegarde</button>
         </div>
         
         <!-- Calculator Tab -->
@@ -571,6 +644,7 @@
                 <h2>Sélectionner la date</h2>
                 <input type="date" class="date-input" id="date-input">
                 <div class="current-date-display" id="current-date-display"></div>
+                <div class="storage-status" id="storage-status">Données sauvegardées automatiquement dans le navigateur</div>
             </div>
             
             <div class="session-selector">
@@ -607,6 +681,7 @@
                 <button class="action-btn save-btn" id="save-btn">Enregistrer les Ventes</button>
                 <button class="action-btn print-btn" id="print-btn">Imprimer</button>
                 <button class="action-btn pdf-btn" id="pdf-btn">Enregistrer en PDF</button>
+                <button class="action-btn backup-btn" id="backup-btn">Sauvegarde Manuelle</button>
             </div>
         </div>
         
@@ -618,6 +693,28 @@
                 </div>
                 <div class="history-list" id="history-list">
                     <!-- History items will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Backup Tab -->
+        <div class="tab-content" id="backup-tab">
+            <div class="backup-section">
+                <h2>Options de Sauvegarde et Restauration</h2>
+                <p>Cette section vous permet de sauvegarder vos données manuellement et de les restaurer si nécessaire.</p>
+                
+                <div class="backup-controls">
+                    <button class="action-btn backup-btn" id="download-backup-btn">Télécharger la Sauvegarde</button>
+                    <label for="restore-file" class="file-label">Restaurer depuis Fichier</label>
+                    <input type="file" id="restore-file" class="file-input" accept=".json">
+                </div>
+                
+                <h3 style="margin-top: 20px;">Données de Sauvegarde (copier/coller)</h3>
+                <textarea class="backup-textarea" id="backup-data" readonly></textarea>
+                
+                <div class="backup-controls" style="margin-top: 15px;">
+                    <button class="action-btn backup-btn" id="copy-backup-btn">Copier les Données</button>
+                    <button class="action-btn" style="background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);" id="restore-from-text-btn">Restaurer depuis Texte</button>
                 </div>
             </div>
         </div>
@@ -647,8 +744,10 @@
         const tabButtons = document.querySelectorAll('.tab-btn');
         const calculatorTab = document.getElementById('calculator-tab');
         const historyTab = document.getElementById('history-tab');
+        const backupTab = document.getElementById('backup-tab');
         const dateInput = document.getElementById('date-input');
         const currentDateDisplay = document.getElementById('current-date-display');
+        const storageStatus = document.getElementById('storage-status');
         const sessionButtons = document.querySelectorAll('.session-btn');
         const productsContainer = document.getElementById('products-container');
         const totalMatinElement = document.getElementById('total-matin');
@@ -658,67 +757,187 @@
         const saveBtn = document.getElementById('save-btn');
         const printBtn = document.getElementById('print-btn');
         const pdfBtn = document.getElementById('pdf-btn');
+        const backupBtn = document.getElementById('backup-btn');
         const successMessage = document.getElementById('success-message');
+        const downloadBackupBtn = document.getElementById('download-backup-btn');
+        const restoreFileInput = document.getElementById('restore-file');
+        const backupDataTextarea = document.getElementById('backup-data');
+        const copyBackupBtn = document.getElementById('copy-backup-btn');
+        const restoreFromTextBtn = document.getElementById('restore-from-text-btn');
         
-        // LocalStorage key
-        const STORAGE_KEY = 'salon_the_palma_data_v2';
+        // Storage mechanism status
+        let storageType = 'localStorage';
+        let storageAvailable = true;
         
         // Initialize date input with today's date
         dateInput.value = currentDate;
         updateDateDisplay();
         
-        // Load data from localStorage on startup
-        function loadFromStorage() {
+        // Check storage availability
+        function checkStorageAvailability() {
             try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    const parsedData = JSON.parse(savedData);
-                    // Validate the data structure
+                const testKey = '__storage_test__';
+                localStorage.setItem(testKey, 'test');
+                localStorage.removeItem(testKey);
+                storageAvailable = true;
+                storageType = 'localStorage';
+                storageStatus.textContent = `Sauvegarde automatique activée (${storageType})`;
+                storageStatus.className = 'storage-status';
+            } catch (error) {
+                storageAvailable = false;
+                storageType = 'none';
+                storageStatus.textContent = 'Sauvegarde automatique désactivée (navigateur en mode privé ou bloqué)';
+                storageStatus.className = 'storage-status storage-error';
+                showWarningMessage('Mode de sauvegarde automatique désactivé. Utilisez la sauvegarde manuelle.');
+            }
+        }
+        
+        // Load data from storage
+        function loadFromStorage() {
+            if (storageAvailable && storageType === 'localStorage') {
+                try {
+                    const savedData = localStorage.getItem('salon_the_palma_data_v3');
+                    if (savedData) {
+                        const parsedData = JSON.parse(savedData);
+                        if (parsedData && typeof parsedData === 'object') {
+                            salesDataByDate = parsedData;
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to load from localStorage:', error);
+                }
+            }
+            
+            // Try to load from URL parameters as fallback
+            const urlParams = new URLSearchParams(window.location.search);
+            const backupData = urlParams.get('backup');
+            if (backupData) {
+                try {
+                    const parsedData = JSON.parse(atob(backupData));
                     if (parsedData && typeof parsedData === 'object') {
                         salesDataByDate = parsedData;
+                        storageType = 'url';
+                        storageStatus.textContent = 'Données chargées depuis l\'URL';
+                        storageStatus.className = 'storage-status';
+                        return true;
                     }
+                } catch (error) {
+                    console.warn('Failed to load from URL parameters:', error);
+                }
+            }
+            
+            return false;
+        }
+        
+        // Save data to storage
+        function saveToStorage() {
+            if (storageAvailable && storageType === 'localStorage') {
+                try {
+                    localStorage.setItem('salon_the_palma_data_v3', JSON.stringify(salesDataByDate));
+                    return true;
+                } catch (error) {
+                    console.warn('Failed to save to localStorage:', error);
+                    storageAvailable = false;
+                    storageType = 'none';
+                    storageStatus.textContent = 'Erreur de sauvegarde - utilisez la sauvegarde manuelle';
+                    storageStatus.className = 'storage-status storage-error';
+                }
+            }
+            return false;
+        }
+        
+        // Manual backup functions
+        function generateBackupData() {
+            return JSON.stringify(salesDataByDate, null, 2);
+        }
+        
+        function downloadBackup() {
+            const backupData = generateBackupData();
+            const blob = new Blob([backupData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `palma_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showSuccessMessage('Sauvegarde téléchargée avec succès !');
+        }
+        
+        function restoreFromBackupData(data) {
+            try {
+                const parsedData = JSON.parse(data);
+                if (parsedData && typeof parsedData === 'object') {
+                    salesDataByDate = parsedData;
+                    saveToStorage();
+                    renderProducts();
+                    updateTotals();
+                    renderHistory();
+                    showSuccessMessage('Données restaurées avec succès !');
+                    return true;
                 }
             } catch (error) {
-                console.warn('Failed to load from localStorage:', error);
-                // Initialize with empty data if loading fails
-                salesDataByDate = {};
+                console.error('Invalid backup data:', error);
+                showErrorMessage('Données de sauvegarde invalides');
             }
+            return false;
         }
         
-        // Save data to localStorage
-        function saveToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(salesDataByDate));
-            } catch (error) {
-                console.warn('Failed to save to localStorage:', error);
-                showErrorMessage('Impossible d\'enregistrer les données. Vérifiez l\'espace de stockage.');
-            }
-        }
-        
-        // Show error message
-        function showErrorMessage(message) {
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'success-message';
-            errorMessage.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
-            errorMessage.textContent = message;
-            errorMessage.classList.add('show');
-            document.body.appendChild(errorMessage);
+        function copyBackupData() {
+            const backupData = generateBackupData();
+            backupDataTextarea.value = backupData;
             
+            navigator.clipboard.writeText(backupData).then(() => {
+                showSuccessMessage('Données de sauvegarde copiées !');
+            }).catch(err => {
+                console.error('Failed to copy backup data:', err);
+                showErrorMessage('Impossible de copier les données');
+            });
+        }
+        
+        // Show messages
+        function showSuccessMessage(message) {
+            successMessage.textContent = message || 'Opération réussie !';
+            successMessage.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+            successMessage.classList.add('show');
             setTimeout(() => {
-                errorMessage.classList.remove('show');
-                setTimeout(() => {
-                    document.body.removeChild(errorMessage);
-                }, 300);
+                successMessage.classList.remove('show');
+            }, 3000);
+        }
+        
+        function showErrorMessage(message) {
+            successMessage.textContent = message || 'Une erreur est survenue';
+            successMessage.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
+        }
+        
+        function showWarningMessage(message) {
+            successMessage.textContent = message || 'Attention';
+            successMessage.style.background = 'linear-gradient(135deg, #f39c12 0%, #d35400 100%)';
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
             }, 3000);
         }
         
         // Initialize the application
         function init() {
-            loadFromStorage();
+            checkStorageAvailability();
+            const loaded = loadFromStorage();
+            if (!loaded) {
+                // Initialize with empty data if no saved data found
+                salesDataByDate = {};
+            }
             ensureDateDataExists(currentDate);
             renderProducts();
             updateTotals();
             renderHistory();
+            updateBackupDataDisplay();
             setupEventListeners();
         }
         
@@ -735,6 +954,11 @@
                     salesDataByDate[date]['apres-midi'][product.name] = 0;
                 });
             }
+        }
+        
+        // Update backup data display
+        function updateBackupDataDisplay() {
+            backupDataTextarea.value = generateBackupData();
         }
         
         // Get sales data for current date and session
@@ -783,9 +1007,12 @@
                     const tab = button.dataset.tab;
                     calculatorTab.classList.toggle('active', tab === 'calculator');
                     historyTab.classList.toggle('active', tab === 'history');
+                    backupTab.classList.toggle('active', tab === 'backup');
                     
                     if (tab === 'history') {
                         renderHistory();
+                    } else if (tab === 'backup') {
+                        updateBackupDataDisplay();
                     }
                 });
             });
@@ -797,6 +1024,7 @@
                 ensureDateDataExists(currentDate);
                 renderProducts();
                 updateTotals();
+                if (storageAvailable) saveToStorage();
             });
             
             // Session buttons
@@ -826,7 +1054,8 @@
                     salesDataByDate[currentDate][currentSession][productName] = value;
                     renderProducts();
                     updateTotals();
-                    saveToStorage();
+                    if (storageAvailable) saveToStorage();
+                    updateBackupDataDisplay();
                 }
             });
             
@@ -841,15 +1070,29 @@
                     salesDataByDate[currentDate][currentSession][productName] = value;
                     renderProducts();
                     updateTotals();
-                    saveToStorage();
+                    if (storageAvailable) saveToStorage();
+                    updateBackupDataDisplay();
                 }
             });
             
             // Save button
             saveBtn.addEventListener('click', () => {
-                saveCurrentData();
-                showSuccessMessage();
+                if (storageAvailable) {
+                    saveToStorage();
+                    showSuccessMessage('Données enregistrées dans le navigateur');
+                } else {
+                    showWarningMessage('Sauvegarde automatique désactivée. Utilisez la sauvegarde manuelle.');
+                }
                 renderHistory();
+            });
+            
+            // Backup button
+            backupBtn.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.tab-btn[data-tab="backup"]').classList.add('active');
+                calculatorTab.classList.remove('active');
+                backupTab.classList.add('active');
+                updateBackupDataDisplay();
             });
             
             // Print button
@@ -861,20 +1104,42 @@
             pdfBtn.addEventListener('click', () => {
                 generatePDF();
             });
-        }
-        
-        // Save current data to ensure it's properly recorded
-        function saveCurrentData() {
-            ensureDateDataExists(currentDate);
-            saveToStorage();
-        }
-        
-        // Show success message
-        function showSuccessMessage() {
-            successMessage.classList.add('show');
-            setTimeout(() => {
-                successMessage.classList.remove('show');
-            }, 3000);
+            
+            // Download backup button
+            downloadBackupBtn.addEventListener('click', () => {
+                downloadBackup();
+            });
+            
+            // Restore from file
+            restoreFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        restoreFromBackupData(event.target.result);
+                        restoreFileInput.value = '';
+                    };
+                    reader.onerror = function() {
+                        showErrorMessage('Erreur lors de la lecture du fichier');
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            // Copy backup button
+            copyBackupBtn.addEventListener('click', () => {
+                copyBackupData();
+            });
+            
+            // Restore from text button
+            restoreFromTextBtn.addEventListener('click', () => {
+                const backupData = backupDataTextarea.value;
+                if (backupData) {
+                    restoreFromBackupData(backupData);
+                } else {
+                    showErrorMessage('Aucune donnée à restaurer');
+                }
+            });
         }
         
         // Update date display
