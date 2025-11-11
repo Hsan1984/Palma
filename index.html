@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon de Thé "PALMA" - Calcul de Recette</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -41,6 +43,76 @@
             font-size: 1.2rem;
             color: #666;
             font-weight: 300;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #8b4513;
+            border: 2px solid #e9ecef;
+        }
+        
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+            color: white;
+            border: 2px solid #8b4513;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .date-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .date-input {
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #8b4513;
+            border-radius: 12px;
+            outline: none;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .date-input:focus {
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+        }
+        
+        .current-date-display {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: #8b4513;
+            font-weight: 600;
         }
         
         .session-selector {
@@ -163,6 +235,7 @@
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            margin-bottom: 20px;
         }
         
         .totals-grid {
@@ -206,7 +279,226 @@
             border-top: 1px solid #f8f9fa;
         }
         
+        /* Action Buttons */
+        .action-section {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .print-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .pdf-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+        
+        .action-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* History Section Styles */
+        .history-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .history-title {
+            font-size: 1.5rem;
+            color: #8b4513;
+            font-weight: 700;
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #8b4513;
+            transition: transform 0.2s ease;
+        }
+        
+        .history-item:hover {
+            transform: translateX(5px);
+            background: #e9ecef;
+        }
+        
+        .history-date {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #8b4513;
+            margin-bottom: 10px;
+        }
+        
+        .history-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .history-session {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .session-title {
+            font-weight: 600;
+            color: #8b4513;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .session-products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .product-name-history {
+            font-weight: 600;
+        }
+        
+        .product-quantity {
+            color: #27ae60;
+        }
+        
+        .session-total {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .no-history {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        /* Success Message */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .success-message.show {
+            transform: translateX(0);
+        }
+        
+        /* Print styles */
+        @media print {
+            .tabs, .action-section, .tab-btn, .success-message, .container > header {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            
+            .container {
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+            
+            .tab-content:not(.active) {
+                display: none !important;
+            }
+            
+            .tab-content.active {
+                display: block !important;
+            }
+            
+            .product-card, .totals-section, .date-selector, .session-selector {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+                padding: 20px;
+                border-bottom: 2px solid #8b4513;
+            }
+            
+            .print-header h2 {
+                color: #8b4513;
+                font-size: 1.8rem;
+            }
+        }
+        
         @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tab-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
             .session-buttons {
                 flex-direction: column;
                 align-items: center;
@@ -217,8 +509,38 @@
                 max-width: 300px;
             }
             
+            .action-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
             h1 {
                 font-size: 2rem;
+            }
+            
+            .date-input {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .history-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .success-message {
+                top: 60px;
+                right: 10px;
+                left: 10px;
+                transform: translateY(-100px);
+            }
+            
+            .success-message.show {
+                transform: translateY(0);
             }
         }
     </style>
@@ -230,36 +552,70 @@
             <p class="subtitle">Calcul de Recette - Matin & Après-Midi</p>
         </header>
         
-        <div class="session-selector">
-            <h2>Sélectionner la séance de travail</h2>
-            <div class="session-buttons">
-                <button class="session-btn active" data-session="matin">Matin</button>
-                <button class="session-btn" data-session="apres-midi">Après-Midi</button>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="calculator">Calculatrice</button>
+            <button class="tab-btn" data-tab="history">Historique</button>
+        </div>
+        
+        <!-- Calculator Tab -->
+        <div class="tab-content active" id="calculator-tab">
+            <div class="date-selector">
+                <h2>Sélectionner la date</h2>
+                <input type="date" class="date-input" id="date-input">
+                <div class="current-date-display" id="current-date-display"></div>
+            </div>
+            
+            <div class="session-selector">
+                <h2>Sélectionner la séance de travail</h2>
+                <div class="session-buttons">
+                    <button class="session-btn active" data-session="matin">Matin</button>
+                    <button class="session-btn" data-session="apres-midi">Après-Midi</button>
+                </div>
+            </div>
+            
+            <div class="products-grid" id="products-container">
+                <!-- Products will be dynamically inserted here -->
+            </div>
+            
+            <div class="totals-section">
+                <h2>Totaux</h2>
+                <div class="totals-grid">
+                    <div class="total-card">
+                        <div class="total-label">Total Matin</div>
+                        <div class="total-amount" id="total-matin">0 DT</div>
+                    </div>
+                    <div class="total-card">
+                        <div class="total-label">Total Après-Midi</div>
+                        <div class="total-amount" id="total-apres-midi">0 DT</div>
+                    </div>
+                    <div class="total-card grand-total">
+                        <div class="total-label">Total des Deux Séances</div>
+                        <div class="total-amount" id="total-general">0 DT</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <button class="action-btn save-btn" id="save-btn">Enregistrer les Ventes</button>
+                <button class="action-btn print-btn" id="print-btn">Imprimer</button>
+                <button class="action-btn pdf-btn" id="pdf-btn">Enregistrer en PDF</button>
             </div>
         </div>
         
-        <div class="products-grid" id="products-container">
-            <!-- Products will be dynamically inserted here -->
-        </div>
-        
-        <div class="totals-section">
-            <h2>Totaux</h2>
-            <div class="totals-grid">
-                <div class="total-card">
-                    <div class="total-label">Total Matin</div>
-                    <div class="total-amount" id="total-matin">0 DT</div>
+        <!-- History Tab -->
+        <div class="tab-content" id="history-tab">
+            <div class="history-section">
+                <div class="history-header">
+                    <h2 class="history-title">Historique des Ventes</h2>
                 </div>
-                <div class="total-card">
-                    <div class="total-label">Total Après-Midi</div>
-                    <div class="total-amount" id="total-apres-midi">0 DT</div>
-                </div>
-                <div class="total-card grand-total">
-                    <div class="total-label">Total des Deux Séances</div>
-                    <div class="total-amount" id="total-general">0 DT</div>
+                <div class="history-list" id="history-list">
+                    <!-- History items will be dynamically inserted here -->
                 </div>
             </div>
         </div>
     </div>
+    
+    <div class="success-message" id="success-message">Ventes enregistrées avec succès !</div>
 
     <script>
         // Product data with prices in Tunisian Dinars (DT)
@@ -274,43 +630,72 @@
             { name: 'Boisson', price: 2000 }
         ];
         
-        // Sales data for both sessions
-        let salesData = {
-            matin: {},
-            'apres-midi': {}
-        };
-        
-        // Initialize sales data
-        products.forEach(product => {
-            salesData.matin[product.name] = 0;
-            salesData['apres-midi'][product.name] = 0;
-        });
-        
+        // Sales data storage by date
+        let salesDataByDate = {};
         let currentSession = 'matin';
+        let currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         
         // DOM elements
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const calculatorTab = document.getElementById('calculator-tab');
+        const historyTab = document.getElementById('history-tab');
+        const dateInput = document.getElementById('date-input');
+        const currentDateDisplay = document.getElementById('current-date-display');
         const sessionButtons = document.querySelectorAll('.session-btn');
         const productsContainer = document.getElementById('products-container');
         const totalMatinElement = document.getElementById('total-matin');
         const totalApresMidiElement = document.getElementById('total-apres-midi');
         const totalGeneralElement = document.getElementById('total-general');
+        const historyList = document.getElementById('history-list');
+        const saveBtn = document.getElementById('save-btn');
+        const printBtn = document.getElementById('print-btn');
+        const pdfBtn = document.getElementById('pdf-btn');
+        const successMessage = document.getElementById('success-message');
+        
+        // Initialize date input with today's date
+        dateInput.value = currentDate;
+        updateDateDisplay();
         
         // Initialize the application
         function init() {
+            ensureDateDataExists(currentDate);
             renderProducts();
             updateTotals();
+            renderHistory();
             setupEventListeners();
+        }
+        
+        // Ensure data exists for the given date
+        function ensureDateDataExists(date) {
+            if (!salesDataByDate[date]) {
+                salesDataByDate[date] = {
+                    matin: {},
+                    'apres-midi': {}
+                };
+                
+                products.forEach(product => {
+                    salesDataByDate[date].matin[product.name] = 0;
+                    salesDataByDate[date]['apres-midi'][product.name] = 0;
+                });
+            }
+        }
+        
+        // Get sales data for current date and session
+        function getSalesData() {
+            return salesDataByDate[currentDate][currentSession];
         }
         
         // Render products grid
         function renderProducts() {
             productsContainer.innerHTML = '';
             
+            const salesData = getSalesData();
+            
             products.forEach(product => {
                 const productCard = document.createElement('div');
                 productCard.className = 'product-card';
                 
-                const quantity = salesData[currentSession][product.name];
+                const quantity = salesData[product.name];
                 const total = quantity * product.price;
                 
                 productCard.innerHTML = `
@@ -332,6 +717,31 @@
         
         // Setup event listeners
         function setupEventListeners() {
+            // Tab switching
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    const tab = button.dataset.tab;
+                    calculatorTab.classList.toggle('active', tab === 'calculator');
+                    historyTab.classList.toggle('active', tab === 'history');
+                    
+                    if (tab === 'history') {
+                        renderHistory();
+                    }
+                });
+            });
+            
+            // Date input change
+            dateInput.addEventListener('change', () => {
+                currentDate = dateInput.value;
+                updateDateDisplay();
+                ensureDateDataExists(currentDate);
+                renderProducts();
+                updateTotals();
+            });
+            
             // Session buttons
             sessionButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -356,7 +766,7 @@
                     }
                     
                     input.value = value;
-                    salesData[currentSession][productName] = value;
+                    salesDataByDate[currentDate][currentSession][productName] = value;
                     renderProducts();
                     updateTotals();
                 }
@@ -370,21 +780,62 @@
                     
                     if (value < 0) value = 0;
                     e.target.value = value;
-                    salesData[currentSession][productName] = value;
+                    salesDataByDate[currentDate][currentSession][productName] = value;
                     renderProducts();
                     updateTotals();
                 }
             });
+            
+            // Save button
+            saveBtn.addEventListener('click', () => {
+                saveCurrentData();
+                showSuccessMessage();
+                renderHistory();
+            });
+            
+            // Print button
+            printBtn.addEventListener('click', () => {
+                printRecap();
+            });
+            
+            // PDF button
+            pdfBtn.addEventListener('click', () => {
+                generatePDF();
+            });
+        }
+        
+        // Save current data to ensure it's properly recorded
+        function saveCurrentData() {
+            ensureDateDataExists(currentDate);
+            // Data is already being updated in real-time
+        }
+        
+        // Show success message
+        function showSuccessMessage() {
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Update date display
+        function updateDateDisplay() {
+            const date = new Date(currentDate);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = date.toLocaleDateString('fr-FR', options);
+            currentDateDisplay.textContent = `Date sélectionnée: ${formattedDate}`;
         }
         
         // Update totals display
         function updateTotals() {
+            ensureDateDataExists(currentDate);
+            
             let totalMatin = 0;
             let totalApresMidi = 0;
             
             products.forEach(product => {
-                totalMatin += salesData.matin[product.name] * product.price;
-                totalApresMidi += salesData['apres-midi'][product.name] * product.price;
+                totalMatin += salesDataByDate[currentDate].matin[product.name] * product.price;
+                totalApresMidi += salesDataByDate[currentDate]['apres-midi'][product.name] * product.price;
             });
             
             const totalGeneral = totalMatin + totalApresMidi;
@@ -394,8 +845,294 @@
             totalGeneralElement.textContent = totalGeneral.toLocaleString() + ' DT';
         }
         
+        // Print functionality
+        function printRecap() {
+            const printWindow = window.open('', '_blank');
+            const dateObj = new Date(currentDate);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = dateObj.toLocaleDateString('fr-FR', options);
+            
+            let printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Recap Salon de Thé PALMA - ${formattedDate}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .header h1 { color: #8b4513; }
+                        .date { font-size: 18px; margin: 15px 0; }
+                        .section { margin: 20px 0; }
+                        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+                        .product { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+                        .totals { background: #f5f5f5; padding: 20px; border-radius: 10px; margin-top: 20px; }
+                        .total-row { display: flex; justify-content: space-between; margin: 10px 0; font-weight: bold; }
+                        .grand-total { background: #27ae60; color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 20px; margin-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Salon de Thé "PALMA"</h1>
+                        <div class="date">Récapitulatif du ${formattedDate}</div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>Produits Vendus</h2>
+                        <div class="products">
+            `;
+            
+            // Add morning session products
+            printContent += '<div class="product"><h3>Séance Matin</h3>';
+            let hasMorningSales = false;
+            products.forEach(product => {
+                const quantity = salesDataByDate[currentDate].matin[product.name];
+                if (quantity > 0) {
+                    hasMorningSales = true;
+                    printContent += `<div>${product.name}: ${quantity} (${(quantity * product.price).toLocaleString()} DT)</div>`;
+                }
+            });
+            if (!hasMorningSales) {
+                printContent += '<div>Aucune vente</div>';
+            }
+            printContent += '</div>';
+            
+            // Add afternoon session products
+            printContent += '<div class="product"><h3>Séance Après-Midi</h3>';
+            let hasAfternoonSales = false;
+            products.forEach(product => {
+                const quantity = salesDataByDate[currentDate]['apres-midi'][product.name];
+                if (quantity > 0) {
+                    hasAfternoonSales = true;
+                    printContent += `<div>${product.name}: ${quantity} (${(quantity * product.price).toLocaleString()} DT)</div>`;
+                }
+            });
+            if (!hasAfternoonSales) {
+                printContent += '<div>Aucune vente</div>';
+            }
+            printContent += '</div>';
+            
+            printContent += `
+                        </div>
+                    </div>
+                    
+                    <div class="totals">
+                        <h2>Totaux</h2>
+                        <div class="total-row">
+                            <span>Total Matin:</span>
+                            <span>${calculateTotal('matin').toLocaleString()} DT</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Total Après-Midi:</span>
+                            <span>${calculateTotal('apres-midi').toLocaleString()} DT</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grand-total">
+                        Total Général: ${(calculateTotal('matin') + calculateTotal('apres-midi')).toLocaleString()} DT
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.close();
+            };
+        }
+        
+        // Calculate total for a session
+        function calculateTotal(session) {
+            let total = 0;
+            products.forEach(product => {
+                total += salesDataByDate[currentDate][session][product.name] * product.price;
+            });
+            return total;
+        }
+        
+        // Generate PDF
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            
+            // Create new PDF
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.width;
+            const pageHeight = pdf.internal.pageSize.height;
+            
+            // Header
+            pdf.setFontSize(20);
+            pdf.setTextColor(139, 69, 19);
+            pdf.text('Salon de Thé "PALMA"', pageWidth / 2, 20, { align: 'center' });
+            
+            const dateObj = new Date(currentDate);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = dateObj.toLocaleDateString('fr-FR', options);
+            
+            pdf.setFontSize(14);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(`Récapitulatif du ${formattedDate}`, pageWidth / 2, 30, { align: 'center' });
+            
+            let yPosition = 45;
+            
+            // Morning session
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Séance Matin', 20, yPosition);
+            yPosition += 10;
+            
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            let hasMorningSales = false;
+            products.forEach(product => {
+                const quantity = salesDataByDate[currentDate].matin[product.name];
+                if (quantity > 0) {
+                    hasMorningSales = true;
+                    const line = `${product.name}: ${quantity} × ${product.price.toLocaleString()} DT = ${(quantity * product.price).toLocaleString()} DT`;
+                    pdf.text(line, 25, yPosition);
+                    yPosition += 7;
+                }
+            });
+            
+            if (!hasMorningSales) {
+                pdf.text('Aucune vente', 25, yPosition);
+                yPosition += 7;
+            }
+            
+            yPosition += 5;
+            
+            // Afternoon session
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Séance Après-Midi', 20, yPosition);
+            yPosition += 10;
+            
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            let hasAfternoonSales = false;
+            products.forEach(product => {
+                const quantity = salesDataByDate[currentDate]['apres-midi'][product.name];
+                if (quantity > 0) {
+                    hasAfternoonSales = true;
+                    const line = `${product.name}: ${quantity} × ${product.price.toLocaleString()} DT = ${(quantity * product.price).toLocaleString()} DT`;
+                    pdf.text(line, 25, yPosition);
+                    yPosition += 7;
+                }
+            });
+            
+            if (!hasAfternoonSales) {
+                pdf.text('Aucune vente', 25, yPosition);
+                yPosition += 7;
+            }
+            
+            yPosition += 10;
+            
+            // Totals
+            const totalMatin = calculateTotal('matin');
+            const totalApresMidi = calculateTotal('apres-midi');
+            const totalGeneral = totalMatin + totalApresMidi;
+            
+            pdf.setFillColor(230, 230, 230);
+            pdf.rect(15, yPosition, pageWidth - 30, 30, 'F');
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('TOTAUX', pageWidth / 2, yPosition + 8, { align: 'center' });
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`Total Matin: ${totalMatin.toLocaleString()} DT`, 20, yPosition + 15);
+            pdf.text(`Total Après-Midi: ${totalApresMidi.toLocaleString()} DT`, 20, yPosition + 22);
+            pdf.text(`Total Général: ${totalGeneral.toLocaleString()} DT`, pageWidth - 20, yPosition + 28, { align: 'right' });
+            
+            // Save PDF
+            pdf.save(`recap-palma-${currentDate}.pdf`);
+            
+            showSuccessMessage();
+        }
+        
+        // Render history
+        function renderHistory() {
+            // Sort dates in descending order (newest first)
+            const sortedDates = Object.keys(salesDataByDate).sort((a, b) => new Date(b) - new Date(a));
+            
+            if (sortedDates.length === 0) {
+                historyList.innerHTML = '<div class="no-history">Aucune donnée dans l\'historique</div>';
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            
+            sortedDates.forEach(date => {
+                const dateData = salesDataByDate[date];
+                const dateObj = new Date(date);
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = dateObj.toLocaleDateString('fr-FR', options);
+                
+                // Calculate totals for this date
+                let totalMatin = 0;
+                let totalApresMidi = 0;
+                
+                products.forEach(product => {
+                    totalMatin += dateData.matin[product.name] * product.price;
+                    totalApresMidi += dateData['apres-midi'][product.name] * product.price;
+                });
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                // Build products list for matin
+                let matinProductsHtml = '';
+                products.forEach(product => {
+                    if (dateData.matin[product.name] > 0) {
+                        matinProductsHtml += `
+                            <div class="product-item">
+                                <span class="product-name-history">${product.name}</span>
+                                <span class="product-quantity">${dateData.matin[product.name]} (${(dateData.matin[product.name] * product.price).toLocaleString()} DT)</span>
+                            </div>
+                        `;
+                    }
+                });
+                
+                // Build products list for après-midi
+                let apresMidiProductsHtml = '';
+                products.forEach(product => {
+                    if (dateData['apres-midi'][product.name] > 0) {
+                        apresMidiProductsHtml += `
+                            <div class="product-item">
+                                <span class="product-name-history">${product.name}</span>
+                                <span class="product-quantity">${dateData['apres-midi'][product.name]} (${(dateData['apres-midi'][product.name] * product.price).toLocaleString()} DT)</span>
+                            </div>
+                        `;
+                    }
+                });
+                
+                historyItem.innerHTML = `
+                    <div class="history-date">${formattedDate}</div>
+                    <div class="history-details">
+                        <div class="history-session">
+                            <div class="session-title">Séance Matin</div>
+                            <div class="session-products">
+                                ${matinProductsHtml || '<div class="product-item">Aucune vente</div>'}
+                            </div>
+                            <div class="session-total">Total Matin: ${totalMatin.toLocaleString()} DT</div>
+                        </div>
+                        <div class="history-session">
+                            <div class="session-title">Séance Après-Midi</div>
+                            <div class="session-products">
+                                ${apresMidiProductsHtml || '<div class="product-item">Aucune vente</div>'}
+                            </div>
+                            <div class="session-total">Total Après-Midi: ${totalApresMidi.toLocaleString()} DT</div>
+                        </div>
+                    </div>
+                    <div class="session-total" style="margin-top: 15px; font-size: 1.2rem;">
+                        Total Journée: ${(totalMatin + totalApresMidi).toLocaleString()} DT
+                    </div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
+
